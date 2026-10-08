@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro e Gerenciamento de Clientes | CRUD com CrudCrud API</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Google Fonts para uma tipografia moderna -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Cabeçalho -->
+        <header class="app-header">
+            <div class="logo-area">
+                <span class="badge">CRUD REST API</span>
+                <h1>Gerenciador de Clientes</h1>
+                <p>Consumo da API do <strong>CrudCrud</strong> utilizando Fetch API (GET, POST e DELETE)</p>
+            </div>
+        </header>
+
+        <!-- Painel de Configuração do Endpoint CrudCrud -->
+        <section class="card config-card">
+            <div class="config-header">
+                <div class="config-title">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    <h2>Endpoint da API (CrudCrud)</h2>
+                </div>
+                <span class="info-tag">Expira em 24h</span>
+            </div>
+            <p class="config-desc">
+                O CrudCrud fornece endpoints temporários gratuitos. Obtenha o seu em <a href="https://crudcrud.com" target="_blank" rel="noopener noreferrer">crudcrud.com</a> e cole abaixo caso deseje atualizar.
+            </p>
+            <div class="config-input-group">
+                <input type="url" id="api-endpoint-input" placeholder="https://crudcrud.com/api/SEU_HASH_AQUI/clientes" spellcheck="false">
+                <button type="button" id="btn-salvar-endpoint" class="btn btn-secondary">Atualizar Endpoint</button>
+            </div>
+        </section>
+
+        <!-- Mensagens de Alerta Globais -->
+        <div id="mensagem-alerta" class="alert-box d-none" role="alert"></div>
+
+        <main class="main-content">
+            <!-- Formulário de Cadastro (POST) -->
+            <section class="card form-card">
+                <div class="card-header">
+                    <h2>Novo Cliente</h2>
+                    <p>Preencha os campos abaixo para cadastrar um novo cliente via <code>POST</code>.</p>
+                </div>
+
+                <form id="form-cliente" novalidate>
+                    <div class="form-group">
+                        <label for="nome">Nome Completo</label>
+                        <div class="input-wrapper">
+                            <input 
+                                type="text" 
+                                id="nome" 
+                                name="nome" 
+                                placeholder="Ex: Ana Maria Silva" 
+                                required 
+                                minlength="3"
+                                autocomplete="name"
+                            >
+                        </div>
+                        <small class="field-error" id="erro-nome"></small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">E-mail</label>
+                        <div class="input-wrapper">
+                            <input 
+                                type="email" 
+                                id="email" 
+                                name="email" 
+                                placeholder="Ex: ana.silva@exemplo.com" 
+                                required
+                                autocomplete="email"
+                            >
+                        </div>
+                        <small class="field-error" id="erro-email"></small>
+                    </div>
+
+                    <button type="submit" id="btn-cadastrar" class="btn btn-primary">
+                        <span class="btn-text">Cadastrar Cliente</span>
+                        <span class="btn-spinner d-none"></span>
+                    </button>
+                </form>
+            </section>
+
+            <!-- Lista de Clientes (GET e DELETE) -->
+            <section class="card list-card">
+                <div class="card-header list-header">
+                    <div>
+                        <h2>Clientes Cadastrados</h2>
+                        <p>Registros retornados pela requisição <code>GET</code>.</p>
+                    </div>
+                    <div class="list-actions">
+                        <span id="clientes-count" class="badge badge-count">0 clientes</span>
+                        <button type="button" id="btn-recarregar" class="btn btn-icon" title="Recarregar lista">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M23 4v6h-6"></path>
+                                <path d="M1 20v-6h6"></path>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Estado de Carregamento -->
+                <div id="loading-indicator" class="loading-state d-none">
+                    <div class="spinner"></div>
+                    <p>Consultando API CrudCrud...</p>
+                </div>
+
+                <!-- Estado Vazio -->
+                <div id="empty-state" class="empty-state d-none">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <h3>Nenhum cliente cadastrado</h3>
+                    <p>Utilize o formulário ao lado para cadastrar seu primeiro registro.</p>
+                </div>
+
+                <!-- Lista Dinâmica de Clientes -->
+                <ul id="lista-clientes" class="clientes-list" aria-live="polite"></ul>
+            </section>
+        </main>
+
+        <!-- Rodapé explicativo -->
+        <footer class="app-footer">
+            <p>
+                Desafio Técnico Front-end &bull; 
+                Métodos testados: <code>POST /clientes</code>, <code>GET /clientes</code>, <code>DELETE /clientes/{_id}</code>
+            </p>
+        </footer>
+    </div>
+
+    <!-- Script da Aplicação -->
+    <script src="scripts.js"></script>
+</body>
+</html>
