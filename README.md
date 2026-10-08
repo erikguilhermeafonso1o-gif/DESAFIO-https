@@ -86,3 +86,4 @@ git add .
 git commit -m "feat: dashboard completo com KPIs, console de rede e modos de visualizacao"
 git push -u origin main
 ```
+
