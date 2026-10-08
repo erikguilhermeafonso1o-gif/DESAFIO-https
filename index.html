@@ -3,148 +3,369 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro e Gerenciamento de Clientes | CRUD com CrudCrud API</title>
+    <title>Dashboard de Gestão de Clientes | CRUD REST API (CrudCrud)</title>
     <link rel="stylesheet" href="styles.css">
-    <!-- Google Fonts para uma tipografia moderna -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="app-container">
-        <!-- Cabeçalho -->
-        <header class="app-header">
-            <div class="logo-area">
-                <span class="badge">CRUD REST API</span>
-                <h1>Gerenciador de Clientes</h1>
-                <p>Consumo da API do <strong>CrudCrud</strong> utilizando Fetch API (GET, POST e DELETE)</p>
-            </div>
-        </header>
-
-        <!-- Painel de Configuração do Endpoint CrudCrud -->
-        <section class="card config-card">
-            <div class="config-header">
-                <div class="config-title">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                    </svg>
-                    <h2>Endpoint da API (CrudCrud)</h2>
-                </div>
-                <span class="info-tag">Expira em 24h</span>
-            </div>
-            <p class="config-desc">
-                O CrudCrud fornece endpoints temporários gratuitos. Obtenha o seu em <a href="https://crudcrud.com" target="_blank" rel="noopener noreferrer">crudcrud.com</a> e cole abaixo caso deseje atualizar.
-            </p>
-            <div class="config-input-group">
-                <input type="url" id="api-endpoint-input" placeholder="https://crudcrud.com/api/SEU_HASH_AQUI/clientes" spellcheck="false">
-                <button type="button" id="btn-salvar-endpoint" class="btn btn-secondary">Atualizar Endpoint</button>
-                <button type="button" id="btn-resetar-endpoint" class="btn btn-outline" title="Restaurar endpoint padrão">Restaurar Padrão</button>
-            </div>
-        </section>
-
-        <!-- Mensagens de Alerta Globais -->
-        <div id="mensagem-alerta" class="alert-box d-none" role="alert"></div>
-
-        <main class="main-content">
-            <!-- Formulário de Cadastro (POST) -->
-            <section class="card form-card">
-                <div class="card-header">
-                    <h2>Novo Cliente</h2>
-                    <p>Preencha os campos abaixo para cadastrar um novo cliente via <code>POST</code>.</p>
-                </div>
-
-                <form id="form-cliente">
-                    <div class="form-group">
-                        <label for="nome">Nome Completo</label>
-                        <div class="input-wrapper">
-                            <input 
-                                type="text" 
-                                id="nome" 
-                                name="nome" 
-                                placeholder="Ex: Ana Maria Silva" 
-                                required 
-                                minlength="3"
-                                autocomplete="name"
-                            >
-                        </div>
-                        <small class="field-error" id="erro-nome"></small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="email">E-mail</label>
-                        <div class="input-wrapper">
-                            <input 
-                                type="email" 
-                                id="email" 
-                                name="email" 
-                                placeholder="Ex: ana.silva@exemplo.com" 
-                                required
-                                autocomplete="email"
-                            >
-                        </div>
-                        <small class="field-error" id="erro-email"></small>
-                    </div>
-
-                    <button type="submit" id="btn-cadastrar" class="btn btn-primary">
-                        <span class="btn-text">Cadastrar Cliente</span>
-                        <span class="btn-spinner d-none"></span>
-                    </button>
-                </form>
-            </section>
-
-            <!-- Lista de Clientes (GET e DELETE) -->
-            <section class="card list-card">
-                <div class="card-header list-header">
-                    <div>
-                        <h2>Clientes Cadastrados</h2>
-                        <p>Registros retornados pela requisição <code>GET</code>.</p>
-                    </div>
-                    <div class="list-actions">
-                        <span id="clientes-count" class="badge badge-count">0 clientes</span>
-                        <button type="button" id="btn-recarregar" class="btn btn-icon" title="Recarregar lista">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M23 4v6h-6"></path>
-                                <path d="M1 20v-6h6"></path>
-                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Estado de Carregamento -->
-                <div id="loading-indicator" class="loading-state d-none">
-                    <div class="spinner"></div>
-                    <p>Consultando API CrudCrud...</p>
-                </div>
-
-                <!-- Estado Vazio -->
-                <div id="empty-state" class="empty-state d-none">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <!-- Topbar do Dashboard -->
+    <header class="topbar">
+        <div class="topbar-content">
+            <div class="brand">
+                <div class="brand-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                         <circle cx="9" cy="7" r="4"></circle>
                         <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
                         <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                     </svg>
-                    <h3>Nenhum cliente cadastrado</h3>
-                    <p>Utilize o formulário ao lado para cadastrar seu primeiro registro.</p>
+                </div>
+                <div>
+                    <h1 class="brand-title">ClientFlow <span class="badge badge-primary">Dashboard Pro</span></h1>
+                    <p class="brand-subtitle">Gestão Integrada via Fetch API &bull; Métodos <code>GET</code>, <code>POST</code>, <code>DELETE</code></p>
+                </div>
+            </div>
+
+            <div class="topbar-actions">
+                <div class="api-status-badge" id="api-status-badge" title="Status de conexão com a API">
+                    <span class="status-dot"></span>
+                    <span id="api-status-text">API Online</span>
+                    <span class="latency-tag" id="api-latency">0ms</span>
+                </div>
+                <button type="button" id="btn-toggle-config" class="btn btn-secondary btn-sm">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    Configurar API
+                </button>
+            </div>
+        </div>
+
+        <!-- Gaveta de Configuração do Endpoint -->
+        <div class="config-drawer d-none" id="config-drawer">
+            <div class="config-drawer-inner">
+                <div class="config-drawer-info">
+                    <h4>Endpoint CrudCrud Ativo</h4>
+                    <p>Cole o endpoint gerado em <a href="https://crudcrud.com" target="_blank" rel="noopener">crudcrud.com</a> (recurso: <code>/clientes</code>):</p>
+                </div>
+                <div class="config-drawer-form">
+                    <input type="url" id="api-endpoint-input" placeholder="https://crudcrud.com/api/SEU_HASH/clientes" spellcheck="false">
+                    <button type="button" id="btn-salvar-endpoint" class="btn btn-primary btn-sm">Salvar Endpoint</button>
+                    <button type="button" id="btn-resetar-endpoint" class="btn btn-secondary btn-sm">Restaurar Padrão</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="app-layout">
+        <!-- Notificações Flutuantes / Alertas -->
+        <div id="mensagem-alerta" class="alert-box d-none" role="alert"></div>
+
+        <!-- Seção de KPIs / Indicadores do Dashboard -->
+        <section class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-title">Total de Clientes</span>
+                    <div class="kpi-icon icon-blue">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="8.5" cy="7" r="4"></circle>
+                            <polyline points="17 11 19 13 23 9"></polyline>
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpi-total-clientes">0</div>
+                <div class="kpi-footer">
+                    <span class="kpi-trend trend-neutral" id="kpi-status-sub">Sincronizado via GET</span>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-title">Requisições na Sessão</span>
+                    <div class="kpi-icon icon-emerald">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpi-total-reqs">0</div>
+                <div class="kpi-footer">
+                    <span class="kpi-pill kpi-pill-get" id="count-get">0 GET</span>
+                    <span class="kpi-pill kpi-pill-post" id="count-post">0 POST</span>
+                    <span class="kpi-pill kpi-pill-del" id="count-del">0 DEL</span>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-title">Domínios Únicos</span>
+                    <div class="kpi-icon icon-purple">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="2" y1="12" x2="22" y2="12"></line>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpi-dominios-count">0</div>
+                <div class="kpi-footer">
+                    <span class="kpi-trend" id="kpi-dominio-top">Nenhum domínio</span>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-title">Último Status HTTP</span>
+                    <div class="kpi-icon icon-amber">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                            <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                            <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                            <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpi-ultimo-status">--</div>
+                <div class="kpi-footer">
+                    <span class="kpi-trend" id="kpi-ultimo-tempo">Sem chamadas recentes</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Grade de Conteúdo Principal -->
+        <main class="dashboard-grid">
+            <!-- Painel Esquerdo: Cadastro & Console de Logs -->
+            <aside class="sidebar-col">
+                <!-- Formulário de Cadastro (POST) -->
+                <div class="card form-card">
+                    <div class="card-header">
+                        <div class="card-header-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="8.5" cy="7" r="4"></circle>
+                                <line x1="20" y1="8" x2="20" y2="14"></line>
+                                <line x1="23" y1="11" x2="17" y2="11"></line>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2>Cadastrar Cliente</h2>
+                            <p>Envio de dados via método <code>POST</code></p>
+                        </div>
+                    </div>
+
+                    <!-- Avatar Live Preview -->
+                    <div class="avatar-preview-box">
+                        <div class="avatar-preview-circle" id="avatar-preview">??</div>
+                        <div class="avatar-preview-info">
+                            <span class="avatar-preview-name" id="preview-name">Novo Cliente</span>
+                            <span class="avatar-preview-email" id="preview-email">email@exemplo.com</span>
+                        </div>
+                    </div>
+
+                    <form id="form-cliente" autocomplete="off">
+                        <div class="form-group">
+                            <label for="nome">Nome Completo <span class="required">*</span></label>
+                            <div class="input-with-icon">
+                                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                                <input 
+                                    type="text" 
+                                    id="nome" 
+                                    name="nome" 
+                                    placeholder="Ex: Beatriz Lima" 
+                                    required 
+                                    minlength="3"
+                                >
+                            </div>
+                            <span class="field-error" id="erro-nome"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Endereço de E-mail <span class="required">*</span></label>
+                            <div class="input-with-icon">
+                                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                    <polyline points="22,6 12,13 2,6"></polyline>
+                                </svg>
+                                <input 
+                                    type="email" 
+                                    id="email" 
+                                    name="email" 
+                                    placeholder="Ex: beatriz@empresa.com" 
+                                    required
+                                >
+                            </div>
+                            <span class="field-error" id="erro-email"></span>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" id="btn-cadastrar" class="btn btn-primary btn-block">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                    <polyline points="7 3 7 8 15 8"></polyline>
+                                </svg>
+                                <span class="btn-text">Salvar Registro (POST)</span>
+                                <span class="btn-spinner d-none"></span>
+                            </button>
+                        </div>
+                    </form>
                 </div>
 
-                <!-- Lista Dinâmica de Clientes -->
-                <ul id="lista-clientes" class="clientes-list" aria-live="polite"></ul>
+                <!-- Console de Requisições / Log Visual da API -->
+                <div class="card log-card">
+                    <div class="card-header log-header">
+                        <div class="log-header-title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="4 17 10 11 4 5"></polyline>
+                                <line x1="12" y1="19" x2="20" y2="19"></line>
+                            </svg>
+                            <h3>Console da API</h3>
+                        </div>
+                        <button type="button" id="btn-limpar-logs" class="btn-text-action" title="Limpar logs">Limpar</button>
+                    </div>
+                    <div class="log-stream" id="log-stream">
+                        <div class="log-entry log-system">
+                            <span class="log-time">00:00:00</span>
+                            <span class="log-tag">INIT</span>
+                            <span class="log-msg">Monitor de rede e chamadas Fetch API pronto.</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Painel Direito: Gestão de Clientes -->
+            <section class="main-col">
+                <div class="card list-card">
+                    <!-- Barra de Ferramentas / Filtros -->
+                    <div class="toolbar">
+                        <div class="search-box">
+                            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                            <input type="text" id="input-busca" placeholder="Filtrar por nome ou e-mail..." aria-label="Pesquisar clientes">
+                            <button type="button" id="btn-limpar-busca" class="btn-clear-search d-none" title="Limpar busca">&times;</button>
+                        </div>
+
+                        <div class="toolbar-controls">
+                            <!-- Ordenação -->
+                            <div class="control-group">
+                                <label for="select-ordem" class="sr-only">Ordenar por</label>
+                                <select id="select-ordem" class="select-control">
+                                    <option value="recentes">Mais Recentes</option>
+                                    <option value="nome-asc">Nome (A - Z)</option>
+                                    <option value="nome-desc">Nome (Z - A)</option>
+                                </select>
+                            </div>
+
+                            <!-- Alternador de Visualização (Cards vs Tabela) -->
+                            <div class="view-switcher" role="group" aria-label="Modo de visualização">
+                                <button type="button" id="btn-view-cards" class="view-btn active" title="Visualização em Cards">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="3" width="7" height="7"></rect>
+                                        <rect x="14" y="3" width="7" height="7"></rect>
+                                        <rect x="14" y="14" width="7" height="7"></rect>
+                                        <rect x="3" y="14" width="7" height="7"></rect>
+                                    </svg>
+                                </button>
+                                <button type="button" id="btn-view-table" class="view-btn" title="Visualização em Tabela">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="8" y1="6" x2="21" y2="6"></line>
+                                        <line x1="8" y1="12" x2="21" y2="12"></line>
+                                        <line x1="8" y1="18" x2="21" y2="18"></line>
+                                        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                                        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                                        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <!-- Ações Rápidas: Exportar & Recarregar -->
+                            <div class="dropdown-wrapper">
+                                <button type="button" id="btn-exportar" class="btn btn-secondary btn-icon-only" title="Exportar dados (JSON / CSV)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <button type="button" id="btn-recarregar" class="btn btn-secondary btn-icon-only" title="Sincronizar com a API (GET)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="23 4 23 10 17 10"></polyline>
+                                    <polyline points="1 20 1 14 7 14"></polyline>
+                                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Cabeçalho de Status da Lista -->
+                    <div class="list-meta-header">
+                        <div class="list-meta-info">
+                            <span class="list-title">Clientes Cadastrados</span>
+                            <span id="clientes-count" class="badge badge-pill">0 clientes</span>
+                        </div>
+                        <span id="filtro-info" class="filtro-tag d-none">Filtrado</span>
+                    </div>
+
+                    <!-- Estado de Carregamento -->
+                    <div id="loading-indicator" class="state-container d-none">
+                        <div class="spinner"></div>
+                        <p class="state-title">Consultando API CrudCrud...</p>
+                        <p class="state-desc">Executando requisição <code>GET</code> assíncrona.</p>
+                    </div>
+
+                    <!-- Estado Vazio -->
+                    <div id="empty-state" class="state-container d-none">
+                        <div class="state-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="8" y1="12" x2="16" y2="12"></line>
+                            </svg>
+                        </div>
+                        <p class="state-title" id="empty-state-title">Nenhum cliente cadastrado</p>
+                        <p class="state-desc" id="empty-state-desc">Utilize o formulário ao lado para cadastrar seu primeiro registro via POST.</p>
+                    </div>
+
+                    <!-- Container Dinâmico: Modo Cards -->
+                    <ul id="lista-clientes" class="clientes-grid" aria-live="polite"></ul>
+
+                    <!-- Container Dinâmico: Modo Tabela -->
+                    <div id="tabela-container" class="table-responsive d-none">
+                        <table class="clientes-table">
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th>E-mail</th>
+                                    <th>ID CrudCrud</th>
+                                    <th class="th-actions">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-clientes-body"></tbody>
+                        </table>
+                    </div>
+                </div>
             </section>
         </main>
-
-        <!-- Rodapé explicativo -->
-        <footer class="app-footer">
-            <p>
-                Desafio Técnico Front-end &bull; 
-                Métodos testados: <code>POST /clientes</code>, <code>GET /clientes</code>, <code>DELETE /clientes/{_id}</code>
-            </p>
-        </footer>
     </div>
 
-    <!-- Script da Aplicação -->
+    <!-- Rodapé -->
+    <footer class="app-footer">
+        <p>
+            <strong>ClientFlow CRUD</strong> &bull; Consumindo API REST CrudCrud com JavaScript moderno (Fetch API &bull; Promises &bull; Async/Await)
+        </p>
+    </footer>
+
+    <!-- Scripts da Aplicação -->
     <script src="scripts.js"></script>
 </body>
 </html>
