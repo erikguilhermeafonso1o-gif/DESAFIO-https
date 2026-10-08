@@ -377,6 +377,20 @@ body {
     border-color: var(--text-muted);
 }
 
+.btn-outline {
+    background-color: transparent;
+    color: var(--text-secondary);
+    border: 1px dashed var(--border-color);
+    padding: 0.6rem 0.9rem;
+    font-size: 0.85rem;
+}
+
+.btn-outline:hover:not(:disabled) {
+    background-color: var(--bg-page);
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
 .btn-icon {
     background-color: transparent;
     border: 1px solid var(--border-color);
@@ -624,3 +638,4 @@ body {
     border-radius: var(--radius-sm);
     color: var(--text-secondary);
 }
+

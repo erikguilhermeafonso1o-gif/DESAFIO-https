@@ -39,6 +39,7 @@
             <div class="config-input-group">
                 <input type="url" id="api-endpoint-input" placeholder="https://crudcrud.com/api/SEU_HASH_AQUI/clientes" spellcheck="false">
                 <button type="button" id="btn-salvar-endpoint" class="btn btn-secondary">Atualizar Endpoint</button>
+                <button type="button" id="btn-resetar-endpoint" class="btn btn-outline" title="Restaurar endpoint padrão">Restaurar Padrão</button>
             </div>
         </section>
 
@@ -53,7 +54,7 @@
                     <p>Preencha os campos abaixo para cadastrar um novo cliente via <code>POST</code>.</p>
                 </div>
 
-                <form id="form-cliente" novalidate>
+                <form id="form-cliente">
                     <div class="form-group">
                         <label for="nome">Nome Completo</label>
                         <div class="input-wrapper">

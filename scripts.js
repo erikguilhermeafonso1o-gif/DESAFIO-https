@@ -15,27 +15,30 @@
 // CONFIGURAÇÃO DO ENDPOINT CRUDCRUD
 // =============================================================================
 /**
- * IMPORTANTE: Os endpoints gratuitos do CrudCrud expiram após 24 horas ou 100 requisições.
- * Para gerar o seu próprio endpoint:
- * 1. Acesse https://crudcrud.com
- * 2. Copie a URL única gerada (ex: https://crudcrud.com/api/SEU_HASH)
- * 3. Adicione o recurso /clientes no final da URL
- * Você pode alterar a constante abaixo ou atualizar diretamente pelo campo na página!
+ * Endpoint oficial ativo do CrudCrud para o recurso de clientes.
+ * As chaves gratuitas do CrudCrud expiram após 24 horas ou 100 requisições.
+ * Quando expirar, você pode gerar uma nova em https://crudcrud.com
+ * e atualizar diretamente pelo campo na página ou editando a constante abaixo.
  */
-const DEFAULT_API_URL = "https://crudcrud.com/api/3b99dbb601e34ffaa9e1c31da647d6d1/clientes";
+const DEFAULT_API_URL = "https://crudcrud.com/api/54a19d79ac6d4b9bb46d6f26b464d86b/clientes";
 const STORAGE_KEY = "crudcrud_api_endpoint";
 
 /**
- * Retorna o endpoint ativo (salvo no localStorage ou o valor padrão definido acima)
- * @returns {string} URL completa do recurso na API
+ * Retorna o endpoint ativo (salvo no localStorage ou o valor padrão)
+ * Limpa automaticamente se houver algum endpoint antigo ou inválido salvo.
+ * @returns {string} URL completa da API
  */
 function obterEndpointAtivo() {
     const salvo = localStorage.getItem(STORAGE_KEY);
-    return (salvo && salvo.trim() !== "") ? salvo.trim() : DEFAULT_API_URL;
+    if (!salvo || salvo.trim() === "" || salvo.includes("3b99dbb601e34ffaa9e1c31da647d6d1")) {
+        localStorage.removeItem(STORAGE_KEY);
+        return DEFAULT_API_URL;
+    }
+    return salvo.trim();
 }
 
 /**
- * Salva um novo endpoint no localStorage
+ * Salva um novo endpoint no localStorage e atualiza a lista
  * @param {string} novoEndpoint 
  */
 function salvarEndpoint(novoEndpoint) {
@@ -43,23 +46,42 @@ function salvarEndpoint(novoEndpoint) {
         mostrarAlerta("Por favor, insira uma URL válida iniciando com https://", "warning");
         return;
     }
-    localStorage.setItem(STORAGE_KEY, novoEndpoint.trim());
+    
+    // Assegura que termina com o recurso /clientes
+    let endpointFormatado = novoEndpoint.trim();
+    if (!endpointFormatado.endsWith("/clientes")) {
+        endpointFormatado = endpointFormatado.replace(/\/+$/, "") + "/clientes";
+    }
+
+    localStorage.setItem(STORAGE_KEY, endpointFormatado);
+    apiEndpointInput.value = endpointFormatado;
     mostrarAlerta("Endpoint atualizado com sucesso!", "success");
-    console.log(`[Configuração] Novo endpoint definido: ${novoEndpoint.trim()}`);
+    console.log(`[Configuração] Novo endpoint definido: ${endpointFormatado}`);
+    listarClientes();
+}
+
+/**
+ * Restaura o endpoint original padrão
+ */
+function resetarEndpointPadrao() {
+    localStorage.removeItem(STORAGE_KEY);
+    apiEndpointInput.value = DEFAULT_API_URL;
+    mostrarAlerta("Endpoint restaurado para o padrão original!", "success");
+    console.log(`[Configuração] Endpoint restaurado para o padrão: ${DEFAULT_API_URL}`);
     listarClientes();
 }
 
 // =============================================================================
-// SELETORES DO DOM
+// SELETORES DO DOM (COM SUPORTE RESILIENTE A IDs ALTERNATIVOS)
 // =============================================================================
-const formCliente = document.getElementById("form-cliente");
-const inputNome = document.getElementById("nome");
-const inputEmail = document.getElementById("email");
-const btnCadastrar = document.getElementById("btn-cadastrar");
-const btnTexto = btnCadastrar.querySelector(".btn-text");
+const formCliente = document.getElementById("form-cliente") || document.getElementById("cliente-form");
+const inputNome = document.getElementById("nome") || document.querySelector("input[name='nome']");
+const inputEmail = document.getElementById("email") || document.querySelector("input[name='email']");
+const btnCadastrar = document.getElementById("btn-cadastrar") || formCliente.querySelector("button[type='submit']");
+const btnTexto = btnCadastrar.querySelector(".btn-text") || btnCadastrar;
 const btnSpinner = btnCadastrar.querySelector(".btn-spinner");
 
-const listaClientes = document.getElementById("lista-clientes");
+const listaClientes = document.getElementById("lista-clientes") || document.getElementById("clientes-lista");
 const loadingIndicator = document.getElementById("loading-indicator");
 const emptyState = document.getElementById("empty-state");
 const clientesCount = document.getElementById("clientes-count");
@@ -67,6 +89,7 @@ const btnRecarregar = document.getElementById("btn-recarregar");
 
 const apiEndpointInput = document.getElementById("api-endpoint-input");
 const btnSalvarEndpoint = document.getElementById("btn-salvar-endpoint");
+const btnResetarEndpoint = document.getElementById("btn-resetar-endpoint");
 const alertBox = document.getElementById("mensagem-alerta");
 
 const erroNome = document.getElementById("erro-nome");
@@ -76,14 +99,15 @@ const erroEmail = document.getElementById("erro-email");
 // FUNÇÕES AUXILIARES DE UI & FEEDBACK
 // =============================================================================
 
+let timerAlerta = null;
 /**
  * Exibe alerta visual no topo da aplicação
  * @param {string} mensagem Texto da mensagem
  * @param {'success'|'danger'|'warning'} tipo Tipo do alerta
  * @param {number} duracaoMs Tempo em milissegundos para sumir automaticamente
  */
-let timerAlerta = null;
 function mostrarAlerta(mensagem, tipo = "info", duracaoMs = 5000) {
+    if (!alertBox) return;
     if (timerAlerta) clearTimeout(timerAlerta);
 
     alertBox.className = `alert-box alert-${tipo}`;
@@ -100,13 +124,14 @@ function mostrarAlerta(mensagem, tipo = "info", duracaoMs = 5000) {
  * @param {boolean} carregando 
  */
 function setBotaoCarregando(carregando) {
+    if (!btnCadastrar) return;
     btnCadastrar.disabled = carregando;
     if (carregando) {
-        btnTexto.textContent = "Salvando...";
-        btnSpinner.classList.remove("d-none");
+        if (btnTexto && btnTexto !== btnCadastrar) btnTexto.textContent = "Salvando...";
+        if (btnSpinner) btnSpinner.classList.remove("d-none");
     } else {
-        btnTexto.textContent = "Cadastrar Cliente";
-        btnSpinner.classList.add("d-none");
+        if (btnTexto && btnTexto !== btnCadastrar) btnTexto.textContent = "Cadastrar Cliente";
+        if (btnSpinner) btnSpinner.classList.add("d-none");
     }
 }
 
@@ -123,13 +148,13 @@ function extrairIniciais(nome) {
 }
 
 /**
- * Validação simples do formulário
+ * Validação dos campos do formulário
  * @returns {boolean} Se os dados são válidos
  */
 function validarFormulario() {
     let valido = true;
-    erroNome.textContent = "";
-    erroEmail.textContent = "";
+    if (erroNome) erroNome.textContent = "";
+    if (erroEmail) erroEmail.textContent = "";
     inputNome.classList.remove("input-invalid");
     inputEmail.classList.remove("input-invalid");
 
@@ -137,14 +162,14 @@ function validarFormulario() {
     const emailVal = inputEmail.value.trim();
 
     if (!nomeVal || nomeVal.length < 3) {
-        erroNome.textContent = "Informe o nome com no mínimo 3 caracteres.";
+        if (erroNome) erroNome.textContent = "Informe o nome com no mínimo 3 caracteres.";
         inputNome.classList.add("input-invalid");
         valido = false;
     }
 
     const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailVal || !regexEmail.test(emailVal)) {
-        erroEmail.textContent = "Informe um endereço de e-mail válido.";
+        if (erroEmail) erroEmail.textContent = "Informe um endereço de e-mail válido.";
         inputEmail.classList.add("input-invalid");
         valido = false;
     }
@@ -161,12 +186,12 @@ function validarFormulario() {
  */
 async function listarClientes() {
     const endpoint = obterEndpointAtivo();
-    console.log(`[GET] Iniciando requisição para: ${endpoint}`);
+    console.log(`[GET] Consultando clientes na API: ${endpoint}`);
 
-    // Estado visual de carregamento
-    loadingIndicator.classList.remove("d-none");
-    emptyState.classList.add("d-none");
-    listaClientes.innerHTML = "";
+    // Exibe estado de carregamento
+    if (loadingIndicator) loadingIndicator.classList.remove("d-none");
+    if (emptyState) emptyState.classList.add("d-none");
+    if (listaClientes) listaClientes.innerHTML = "";
 
     try {
         const resposta = await fetch(endpoint, {
@@ -176,26 +201,25 @@ async function listarClientes() {
             }
         });
 
-        console.log(`[GET] Resposta recebida da API. Status: ${resposta.status} (${resposta.statusText})`);
+        console.log(`[GET] Resposta HTTP ${resposta.status} (${resposta.statusText})`);
 
         if (!resposta.ok) {
-            // No CrudCrud, 404 geralmente significa que as 24h do endpoint expiraram
             if (resposta.status === 404) {
-                throw new Error("Endpoint expirado ou não encontrado. Acesse crudcrud.com e gere um novo endpoint de 24h.");
+                throw new Error("Endpoint expirado ou inexistente no CrudCrud. Crie um novo em crudcrud.com e atualize a URL.");
             }
-            throw new Error(`Falha ao buscar clientes: Erro HTTP ${resposta.status}`);
+            throw new Error(`Erro na API (${resposta.status}): ${resposta.statusText}`);
         }
 
         const clientes = await resposta.json();
-        console.log(`[GET] Sucesso! ${clientes.length} registro(s) encontrado(s):`, clientes);
+        console.log(`[GET] Clientes carregados com sucesso (${clientes.length}):`, clientes);
 
         renderizarClientes(clientes);
     } catch (erro) {
-        console.error("[GET] Erro ao buscar lista de clientes:", erro);
+        console.error("[GET] Falha na requisição:", erro);
         mostrarAlerta(`Erro ao carregar clientes: ${erro.message}`, "danger", 8000);
         renderizarClientes([]);
     } finally {
-        loadingIndicator.classList.add("d-none");
+        if (loadingIndicator) loadingIndicator.classList.add("d-none");
     }
 }
 
@@ -219,26 +243,26 @@ async function cadastrarCliente(dadosCliente) {
             body: JSON.stringify(dadosCliente)
         });
 
-        console.log(`[POST] Resposta recebida da API. Status: ${resposta.status} (${resposta.statusText})`);
+        console.log(`[POST] Resposta HTTP ${resposta.status} (${resposta.statusText})`);
 
         if (!resposta.ok) {
             if (resposta.status === 404) {
-                throw new Error("Endpoint expirado ou inválido. Atualize a URL do CrudCrud.");
+                throw new Error("Endpoint expirado no CrudCrud. Por favor atualize o endpoint.");
             }
-            throw new Error(`Falha ao cadastrar: Erro HTTP ${resposta.status}`);
+            throw new Error(`Falha ao cadastrar (${resposta.status}): ${resposta.statusText}`);
         }
 
         const clienteCriado = await resposta.json();
-        console.log("[POST] Cliente cadastrado com sucesso! Retorno da API:", clienteCriado);
+        console.log("[POST] Cliente cadastrado com sucesso:", clienteCriado);
 
         mostrarAlerta(`Cliente "${clienteCriado.nome}" cadastrado com sucesso!`, "success");
 
-        // Limpa o formulário e recarrega a lista
+        // Limpa o formulário e atualiza a listagem
         formCliente.reset();
         inputNome.focus();
         await listarClientes();
     } catch (erro) {
-        console.error("[POST] Erro ao cadastrar cliente:", erro);
+        console.error("[POST] Falha na requisição:", erro);
         mostrarAlerta(`Erro ao salvar cliente: ${erro.message}`, "danger", 8000);
     } finally {
         setBotaoCarregando(false);
@@ -247,38 +271,42 @@ async function cadastrarCliente(dadosCliente) {
 
 /**
  * 3. MÉTODO DELETE - Excluir um cliente na API pelo _id
- * @param {string} id Identificador único gerado pelo CrudCrud (_id)
- * @param {string} nomeCliente Nome do cliente para exibir no alerta
+ * @param {string} id Identificador único do CrudCrud (_id)
+ * @param {string} nomeCliente Nome do cliente para exibir no feedback
+ * @param {HTMLButtonElement} [btnElement] Referência do botão para feedback visual
  */
-async function excluirCliente(id, nomeCliente) {
-    const confirmacao = window.confirm(`Deseja realmente excluir o cliente "${nomeCliente}"?`);
-    if (!confirmacao) {
-        console.log(`[DELETE] Operação cancelada pelo usuário para o ID: ${id}`);
-        return;
-    }
-
+async function excluirCliente(id, nomeCliente, btnElement) {
     const endpoint = `${obterEndpointAtivo()}/${id}`;
-    console.log(`[DELETE] Enviando requisição de exclusão para: ${endpoint}`);
+    console.log(`[DELETE] Excluindo cliente ID ${id} em: ${endpoint}`);
+
+    if (btnElement) {
+        btnElement.disabled = true;
+        btnElement.textContent = "Excluindo...";
+    }
 
     try {
         const resposta = await fetch(endpoint, {
             method: "DELETE"
         });
 
-        console.log(`[DELETE] Resposta recebida da API. Status: ${resposta.status} (${resposta.statusText})`);
+        console.log(`[DELETE] Resposta HTTP ${resposta.status} (${resposta.statusText})`);
 
         if (!resposta.ok) {
-            throw new Error(`Falha ao excluir registro: Erro HTTP ${resposta.status}`);
+            throw new Error(`Falha ao excluir registro (${resposta.status}): ${resposta.statusText}`);
         }
 
-        console.log(`[DELETE] Cliente com ID "${id}" excluído com sucesso!`);
+        console.log(`[DELETE] Cliente ${id} (${nomeCliente}) excluído com sucesso!`);
         mostrarAlerta(`Cliente "${nomeCliente}" excluído com sucesso!`, "success");
 
-        // Recarrega a lista para sincronizar com a API
+        // Atualiza a listagem no DOM
         await listarClientes();
     } catch (erro) {
-        console.error("[DELETE] Erro ao excluir cliente:", erro);
+        console.error("[DELETE] Falha na requisição:", erro);
         mostrarAlerta(`Erro ao excluir cliente: ${erro.message}`, "danger", 8000);
+        if (btnElement) {
+            btnElement.disabled = false;
+            btnElement.textContent = "Excluir";
+        }
     }
 }
 
@@ -287,26 +315,32 @@ async function excluirCliente(id, nomeCliente) {
 // =============================================================================
 
 /**
- * Renderiza a lista de clientes no DOM
+ * Renderiza os clientes na lista
  * @param {Array<{ _id: string, nome: string, email: string }>} clientes 
  */
 function renderizarClientes(clientes) {
-    listaClientes.innerHTML = "";
-    clientesCount.textContent = `${clientes.length} ${clientes.length === 1 ? "cliente" : "clientes"}`;
+    if (!listaClientes) return;
 
-    if (!clientes || clientes.length === 0) {
-        emptyState.classList.remove("d-none");
+    listaClientes.innerHTML = "";
+    const total = Array.isArray(clientes) ? clientes.length : 0;
+
+    if (clientesCount) {
+        clientesCount.textContent = `${total} ${total === 1 ? "cliente" : "clientes"}`;
+    }
+
+    if (!Array.isArray(clientes) || clientes.length === 0) {
+        if (emptyState) emptyState.classList.remove("d-none");
         return;
     }
 
-    emptyState.classList.add("d-none");
+    if (emptyState) emptyState.classList.add("d-none");
 
     clientes.forEach(cliente => {
         const li = document.createElement("li");
         li.className = "cliente-item";
         li.dataset.id = cliente._id;
 
-        // Bloco de informações e avatar
+        // Container de informações
         const infoWrapper = document.createElement("div");
         infoWrapper.className = "cliente-info-wrapper";
 
@@ -333,7 +367,7 @@ function renderizarClientes(clientes) {
 
         const idBadge = document.createElement("span");
         idBadge.className = "cliente-id-badge";
-        idBadge.title = "Identificador único gerado pelo CrudCrud";
+        idBadge.title = "ID do registro no CrudCrud";
         idBadge.textContent = `ID: ${cliente._id}`;
 
         detalhes.appendChild(nomeEl);
@@ -358,9 +392,9 @@ function renderizarClientes(clientes) {
             Excluir
         `;
 
-        // Event listener para disparar a exclusão
+        // Event listener para a exclusão
         btnDelete.addEventListener("click", () => {
-            excluirCliente(cliente._id, cliente.nome);
+            excluirCliente(cliente._id, cliente.nome, btnDelete);
         });
 
         li.appendChild(infoWrapper);
@@ -370,7 +404,7 @@ function renderizarClientes(clientes) {
 }
 
 /**
- * Escapar caracteres HTML para prevenção básica de XSS
+ * Escapa caracteres especiais para prevenir XSS
  * @param {string} str 
  * @returns {string}
  */
@@ -388,47 +422,62 @@ function escapeHtml(str) {
 // EVENT LISTENERS & INICIALIZAÇÃO
 // =============================================================================
 
-// Envio do formulário de cadastro (POST)
-formCliente.addEventListener("submit", (evento) => {
-    evento.preventDefault();
+// Formulário de Cadastro (POST)
+if (formCliente) {
+    formCliente.addEventListener("submit", (evento) => {
+        evento.preventDefault();
 
-    if (!validarFormulario()) {
-        return;
-    }
+        if (!validarFormulario()) {
+            return;
+        }
 
-    const novoCliente = {
-        nome: inputNome.value.trim(),
-        email: inputEmail.value.trim()
-    };
+        const novoCliente = {
+            nome: inputNome.value.trim(),
+            email: inputEmail.value.trim()
+        };
 
-    cadastrarCliente(novoCliente);
-});
+        cadastrarCliente(novoCliente);
+    });
+}
 
-// Botão de atualizar lista manualmente
-btnRecarregar.addEventListener("click", () => {
-    console.log("[Ação] Botão de recarregar acionado");
-    listarClientes();
-});
+// Botão de recarregar lista manualmente
+if (btnRecarregar) {
+    btnRecarregar.addEventListener("click", () => {
+        console.log("[Ação] Recarregando lista manualmente...");
+        listarClientes();
+    });
+}
 
-// Salvar novo endpoint configurado na UI
-btnSalvarEndpoint.addEventListener("click", () => {
-    const valor = apiEndpointInput.value.trim();
-    if (valor) {
-        salvarEndpoint(valor);
-    } else {
-        mostrarAlerta("Digite uma URL de endpoint antes de salvar.", "warning");
-    }
-});
+// Botão de salvar endpoint customizado
+if (btnSalvarEndpoint) {
+    btnSalvarEndpoint.addEventListener("click", () => {
+        const valor = apiEndpointInput.value.trim();
+        if (valor) {
+            salvarEndpoint(valor);
+        } else {
+            mostrarAlerta("Digite uma URL de endpoint antes de salvar.", "warning");
+        }
+    });
+}
 
-// Inicialização ao carregar o DOM
+// Botão de restaurar endpoint padrão
+if (btnResetarEndpoint) {
+    btnResetarEndpoint.addEventListener("click", () => {
+        resetarEndpointPadrao();
+    });
+}
+
+// Inicialização automática ao carregar o DOM
 document.addEventListener("DOMContentLoaded", () => {
-    console.log("%c=== GERENCIADOR DE CLIENTES CARREGADO ===", "color: #2563eb; font-weight: bold; font-size: 14px;");
+    console.log("%c=== GERENCIADOR DE CLIENTES INICIADO ===", "color: #2563eb; font-weight: bold; font-size: 14px;");
     
-    // Preenche o campo de endpoint com o valor ativo atual
+    // Atualiza o input com o endpoint ativo
     const endpointAtivo = obterEndpointAtivo();
-    apiEndpointInput.value = endpointAtivo;
-    console.log(`[Inicialização] Endpoint ativo da API: ${endpointAtivo}`);
+    if (apiEndpointInput) {
+        apiEndpointInput.value = endpointAtivo;
+    }
+    console.log(`[Configuração] Endpoint ativo: ${endpointAtivo}`);
 
-    // Executa a primeira busca na API (GET)
+    // Carrega clientes da API imediatamente via GET
     listarClientes();
 });
